@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports (generated files)
+report.json
+report_v2.json
+lint_report.txt
+lint_report_final.txt
