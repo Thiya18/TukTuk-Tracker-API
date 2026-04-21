@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3000;
 // Connect to MongoDB
 connectDB();
 
-// ─── Security Middleware ───────────────────────────────────────────
+// Security Middleware
 app.use(helmet());
 
 // Fix: correctly handle ALLOWED_ORIGINS — support "*" and comma-separated list
@@ -41,7 +41,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// ─── Rate Limiting ─────────────────────────────────────────────────
+//  Rate Limiting 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200,
@@ -51,15 +51,15 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// ─── General Middleware ────────────────────────────────────────────
+// General Middleware 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ─── Swagger Docs ──────────────────────────────────────────────────
+// Swagger Docs 
 swaggerSetup(app);
 
-// ─── Health Check ──────────────────────────────────────────────────
+// Health Check 
 app.get('/health', (req, res) => {
   const used = process.memoryUsage();
   res.status(200).json({
@@ -76,7 +76,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ─── API Routes ────────────────────────────────────────────────────
+// API Routes 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/locations', locationRoutes);
@@ -85,12 +85,12 @@ app.use('/api/v1/districts', districtRoutes);
 app.use('/api/v1/stations', stationRoutes);
 app.use('/api/v1/drivers', driverRoutes);
 
-// ─── 404 Handler ───────────────────────────────────────────────────
+//  404 Handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
-// ─── Global Error Handler ──────────────────────────────────────────
+// Global Error Handler
 app.use(errorHandler);
 
 app.listen(PORT, () => {
@@ -98,7 +98,7 @@ app.listen(PORT, () => {
   console.log(`📖 Swagger docs: http://localhost:${PORT}/api-docs`);
 });
 
-// ─── Global Process Error Handlers ─────────────────────────────────
+// Global Process Error Handlers
 process.on('unhandledRejection', (reason) => {
   console.error('[UnhandledRejection]', reason);
   process.exit(1);
