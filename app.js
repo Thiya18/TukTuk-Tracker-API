@@ -8,6 +8,9 @@ import 'dotenv/config';
 import connectDB from './src/config/db.js';
 import swaggerSetup from './src/config/swagger.js';
 
+const app = express();
+app.set('trust proxy', 1); // ADD THIS LINE
+
 // Route imports
 import authRoutes from './src/routes/auth.routes.js';
 import vehicleRoutes from './src/routes/vehicle.routes.js';

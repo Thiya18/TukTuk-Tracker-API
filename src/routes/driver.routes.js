@@ -112,4 +112,77 @@ router.put('/:id', authorize('hq_admin', 'provincial_officer', 'station_officer'
   }
 });
 
+/**
+ * @swagger
+ * /drivers/{id}/status:
+ *   patch:
+ *     summary: Toggle driver active status
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Driver status updated
+ */
+router.patch('/:id/status', authorize('hq_admin', 'provincial_officer'), async (req, res, next) => {
+  try {
+    const { isActive } = req.body;
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'isActive must be a boolean.' });
+    }
+    const driver = await Driver.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      { new: true }
+    );
+    if (!driver) return res.status(404).json({ success: false, message: 'Driver not found.' });
+    res.status(200).json({ success: true, data: driver });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /drivers/{id}:
+ *   delete:
+ *     summary: Delete a driver
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Driver deleted
+ */
+router.delete('/:id', authorize('hq_admin'), async (req, res, next) => {
+  try {
+    const driver = await Driver.findByIdAndDelete(req.params.id);
+    if (!driver) return res.status(404).json({ success: false, message: 'Driver not found.' });
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
