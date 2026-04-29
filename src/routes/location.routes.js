@@ -48,7 +48,6 @@ router.post(
 
       const { vehicleId, latitude, longitude, speed, heading, accuracy } = req.body;
 
-      // ── Security: device role may only ping its own assigned vehicle ──
       if (req.user.role === 'device') {
         if (!req.user.vehicle || req.user.vehicle.toString() !== vehicleId) {
           return res.status(403).json({
@@ -58,7 +57,6 @@ router.post(
         }
       }
 
-      // Verify vehicle exists
       const vehicle = await Vehicle.findById(vehicleId);
       if (!vehicle) {
         return res.status(404).json({ success: false, message: 'Vehicle not found.' });
@@ -194,11 +192,9 @@ router.get('/:vehicleId/history', async (req, res, next) => {
  */
 router.get('/district/:districtId/latest', async (req, res, next) => {
   try {
-    // Get all active vehicles in district
     const vehicles = await Vehicle.find({ district: req.params.districtId, status: 'active' }).select('_id');
     const vehicleIds = vehicles.map((v) => v._id);
 
-    // For each vehicle get latest ping using aggregation
     const latestPings = await LocationPing.aggregate([
       { $match: { vehicle: { $in: vehicleIds } } },
       { $sort: { vehicle: 1, timestamp: -1 } },
@@ -234,11 +230,9 @@ router.get('/district/:districtId/latest', async (req, res, next) => {
  */
 router.get('/province/:provinceId/latest', async (req, res, next) => {
   try {
-    // Get all active vehicles in province
     const vehicles = await Vehicle.find({ province: req.params.provinceId, status: 'active' }).select('_id');
     const vehicleIds = vehicles.map((v) => v._id);
 
-    // For each vehicle get latest ping using aggregation
     const latestPings = await LocationPing.aggregate([
       { $match: { vehicle: { $in: vehicleIds } } },
       { $sort: { vehicle: 1, timestamp: -1 } },
@@ -256,6 +250,7 @@ router.get('/province/:provinceId/latest', async (req, res, next) => {
     next(error);
   }
 });
+
 /**
  * @swagger
  * /locations/suspicious:
@@ -278,14 +273,13 @@ router.get('/province/:provinceId/latest', async (req, res, next) => {
  *           default: 50
  *     responses:
  *       200:
- *         description: List of suspicious pings
+ *         description: List of suspicious pings grouped by vehicle
  */
 router.get('/suspicious', authorize('hq_admin', 'provincial_officer', 'station_officer'), async (req, res, next) => {
   try {
     const speedThreshold = parseInt(req.query.speedThreshold) || 60;
     const limit = parseInt(req.query.limit) || 50;
 
-    // Build scope filter based on role
     const filter = { speed: { $gt: speedThreshold } };
     if (req.user.role === 'provincial_officer') filter.province = req.user.province;
     if (req.user.role === 'station_officer') filter.district = req.user.district;
@@ -302,16 +296,27 @@ router.get('/suspicious', authorize('hq_admin', 'provincial_officer', 'station_o
       .sort('-speed')
       .limit(limit);
 
-    // Group by vehicle for better analysis
+    // Auto flag vehicles with high speed pings
+    if (suspiciousPings.length > 0) {
+      const vehicleIds = [...new Set(suspiciousPings.map(p => p.vehicle?._id).filter(Boolean))];
+      await Vehicle.updateMany(
+        { _id: { $in: vehicleIds } },
+        { status: 'flagged', isActive: false }
+      );
+    }
+
+    // Group by vehicle
     const grouped = {};
     suspiciousPings.forEach(ping => {
       const vehicleId = ping.vehicle?._id?.toString();
       if (!grouped[vehicleId]) {
         grouped[vehicleId] = {
           vehicle: ping.vehicle,
-          incidents: [],
+          isSuspicious: true,
+          status: 'flagged',
           maxSpeed: 0,
-          totalIncidents: 0
+          totalIncidents: 0,
+          incidents: []
         };
       }
       grouped[vehicleId].incidents.push({
@@ -335,7 +340,5 @@ router.get('/suspicious', authorize('hq_admin', 'provincial_officer', 'station_o
     next(error);
   }
 });
-
-
 
 export default router;
