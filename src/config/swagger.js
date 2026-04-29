@@ -11,15 +11,6 @@ const options = {
         ## Real-Time Three-Wheeler (Tuk-Tuk) Tracking & Movement Logging System
         Developed for Sri Lanka Police to support operational visibility and investigations.
         
-        ### Authentication
-        Use the **/api/v1/auth/login** endpoint to get a JWT token.
-        Click **Authorize** and enter: \`Bearer <your_token>\`
-        
-        ### User Roles
-        - **hq_admin** - Full access (Police Headquarters)
-        - **provincial_officer** - Province-scoped access
-        - **station_officer** - District/station-scoped access
-        - **device** - Location ping submission only
       `,
       contact: { name: 'Sri Lanka Police IT Division' },
     },
