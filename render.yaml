@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tuk-tuk-tracker-api
+    runtime: node
+    region: singapore   # Closest region to Sri Lanka
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      # Set these manually in the Render dashboard — never commit secrets
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
