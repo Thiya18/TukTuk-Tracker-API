@@ -154,4 +154,57 @@ router.get('/me', protect, async (req, res) => {
   res.status(200).json({ success: true, data: req.user });
 });
 
+/**
+ * @swagger
+ * /auth/users:
+ *   get:
+ *     summary: Get all users (hq_admin only)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all users
+ */
+router.get('/users', protect, authorize('hq_admin'), async (req, res, next) => {
+  try {
+    const users = await User.find({}).select('-password');
+    res.status(200).json({ success: true, count: users.length, data: users });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /auth/users/{id}/deactivate:
+ *   patch:
+ *     summary: Deactivate a user (hq_admin only)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deactivated
+ */
+router.patch('/users/:id/deactivate', protect, authorize('hq_admin'), async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
