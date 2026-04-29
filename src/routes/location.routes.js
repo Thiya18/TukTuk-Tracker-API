@@ -256,5 +256,86 @@ router.get('/province/:provinceId/latest', async (req, res, next) => {
     next(error);
   }
 });
+/**
+ * @swagger
+ * /locations/suspicious:
+ *   get:
+ *     summary: Get suspicious location pings (overspeeding, unusual activity)
+ *     tags: [Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: speedThreshold
+ *         schema:
+ *           type: number
+ *           default: 60
+ *         description: Speed threshold in km/h (default 60)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: List of suspicious pings
+ */
+router.get('/suspicious', authorize('hq_admin', 'provincial_officer', 'station_officer'), async (req, res, next) => {
+  try {
+    const speedThreshold = parseInt(req.query.speedThreshold) || 60;
+    const limit = parseInt(req.query.limit) || 50;
+
+    // Build scope filter based on role
+    const filter = { speed: { $gt: speedThreshold } };
+    if (req.user.role === 'provincial_officer') filter.province = req.user.province;
+    if (req.user.role === 'station_officer') filter.district = req.user.district;
+
+    const suspiciousPings = await LocationPing.find(filter)
+      .populate({
+        path: 'vehicle',
+        select: 'registrationNumber status district province',
+        populate: [
+          { path: 'district', select: 'name' },
+          { path: 'province', select: 'name' }
+        ]
+      })
+      .sort('-speed')
+      .limit(limit);
+
+    // Group by vehicle for better analysis
+    const grouped = {};
+    suspiciousPings.forEach(ping => {
+      const vehicleId = ping.vehicle?._id?.toString();
+      if (!grouped[vehicleId]) {
+        grouped[vehicleId] = {
+          vehicle: ping.vehicle,
+          incidents: [],
+          maxSpeed: 0,
+          totalIncidents: 0
+        };
+      }
+      grouped[vehicleId].incidents.push({
+        latitude: ping.latitude,
+        longitude: ping.longitude,
+        speed: ping.speed,
+        timestamp: ping.timestamp
+      });
+      grouped[vehicleId].maxSpeed = Math.max(grouped[vehicleId].maxSpeed, ping.speed);
+      grouped[vehicleId].totalIncidents++;
+    });
+
+    res.status(200).json({
+      success: true,
+      speedThreshold: `>${speedThreshold} km/h`,
+      totalPings: suspiciousPings.length,
+      vehiclesInvolved: Object.keys(grouped).length,
+      data: Object.values(grouped)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 
 export default router;
