@@ -16,12 +16,15 @@ router.use(protect);
  *       - in: query
  *         name: district
  *         schema: { type: string }
+ *         description: Filter by district ID
  *       - in: query
  *         name: province
  *         schema: { type: string }
+ *         description: Filter by province ID
  *       - in: query
  *         name: isActive
  *         schema: { type: boolean }
+ *         description: Filter by active status
  *     responses:
  *       200:
  *         description: List of drivers
@@ -50,6 +53,18 @@ router.get('/', async (req, res, next) => {
  *   get:
  *     summary: Get single driver
  *     tags: [Drivers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Driver ID
+ *     responses:
+ *       200:
+ *         description: Driver found
+ *       404:
+ *         description: Driver not found
  */
 router.get('/:id', async (req, res, next) => {
   try {
@@ -70,6 +85,37 @@ router.get('/:id', async (req, res, next) => {
  *   post:
  *     summary: Register a new driver
  *     tags: [Drivers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fullName, nationalId, licenseNumber, district, province]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Kasun Perera
+ *               nationalId:
+ *                 type: string
+ *                 example: 199012345678
+ *               licenseNumber:
+ *                 type: string
+ *                 example: B1234567
+ *               phone:
+ *                 type: string
+ *                 example: 0771234567
+ *               district:
+ *                 type: string
+ *                 example: 64a1b2c3d4e5f6g7h8i9j0k1
+ *               province:
+ *                 type: string
+ *                 example: 64a1b2c3d4e5f6g7h8i9j0k2
+ *     responses:
+ *       201:
+ *         description: Driver registered successfully
+ *       400:
+ *         description: Validation error
  */
 router.post(
   '/',
@@ -101,6 +147,31 @@ router.post(
  *   put:
  *     summary: Update driver details
  *     tags: [Drivers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Driver ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Driver updated successfully
+ *       404:
+ *         description: Driver not found
  */
 router.put('/:id', authorize('hq_admin', 'provincial_officer', 'station_officer'), async (req, res, next) => {
   try {
@@ -126,6 +197,7 @@ router.put('/:id', authorize('hq_admin', 'provincial_officer', 'station_officer'
  *         required: true
  *         schema:
  *           type: string
+ *         description: Driver ID
  *     requestBody:
  *       required: true
  *       content:
@@ -135,9 +207,12 @@ router.put('/:id', authorize('hq_admin', 'provincial_officer', 'station_officer'
  *             properties:
  *               isActive:
  *                 type: boolean
+ *                 example: true
  *     responses:
  *       200:
  *         description: Driver status updated
+ *       404:
+ *         description: Driver not found
  */
 router.patch('/:id/status', authorize('hq_admin', 'provincial_officer'), async (req, res, next) => {
   try {
@@ -161,7 +236,7 @@ router.patch('/:id/status', authorize('hq_admin', 'provincial_officer'), async (
  * @swagger
  * /drivers/{id}:
  *   delete:
- *     summary: Delete a driver
+ *     summary: Delete a driver (hq_admin only)
  *     tags: [Drivers]
  *     security:
  *       - bearerAuth: []
@@ -171,9 +246,12 @@ router.patch('/:id/status', authorize('hq_admin', 'provincial_officer'), async (
  *         required: true
  *         schema:
  *           type: string
+ *         description: Driver ID
  *     responses:
  *       204:
- *         description: Driver deleted
+ *         description: Driver deleted successfully
+ *       404:
+ *         description: Driver not found
  */
 router.delete('/:id', authorize('hq_admin'), async (req, res, next) => {
   try {

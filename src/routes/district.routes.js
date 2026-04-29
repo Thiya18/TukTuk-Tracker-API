@@ -41,6 +41,18 @@ router.get('/', async (req, res, next) => {
  *   get:
  *     summary: Get a single district
  *     tags: [Administrative]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: District ID
+ *     responses:
+ *       200:
+ *         description: District found
+ *       404:
+ *         description: District not found
  */
 router.get('/:id', async (req, res, next) => {
   try {
