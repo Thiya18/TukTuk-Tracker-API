@@ -1,6 +1,10 @@
-# TukTuk-Tracker-API WEB API CW
-**Student ID - COBSCCOMP242P-004**
-**Name - M.T. Senanayake**
+# TukTuk-Tracker-API WEB API CW <br>
+**Student ID - COBSCCOMP242P-004** <br>
+**Name - M.T. Senanayake** <br>
+**Coventry Uni ID - 16110407** <br>
+**Module - NB6007CEM - Web API Development** <br>
+**Batch - COBSCCOMP242p** <br>
+
 
 URLS <br>
 Swagger DOC Deployed URL -  https://tuktuk-api.onrender.com/api-docs <br>
